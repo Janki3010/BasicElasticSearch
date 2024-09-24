@@ -1,0 +1,436 @@
+#CURD Operation
+#Create an Index
+PUT student
+
+#Add document in index
+POST student/_doc/1
+{
+  "Name":"Junnu",
+  "Age":20,
+  "Marks":87,
+  "Address":"Ahmedabad"
+}
+
+#Retrieve (Read) a Document
+GET student/_doc/2
+
+#Retrieve all document
+GET user11/_search
+{
+ "query": {
+   "match":{
+     "fname": "stephan"
+   }
+ }
+}
+
+#Update a document (Marks)
+POST student/_update/1
+{
+  "doc":{
+    "Marks":90
+  }
+}
+
+#Update a document (Age)
+POST student/_update/1
+{
+  "script": {
+    "source": "ctx._source.Age = params.new_age",
+    "params": {
+      "new_age": 21
+    }
+  }
+}
+
+
+
+#Update in all fields(Marks+5)
+POST student/_update_by_query
+{
+  "query": {
+    "match_all": {}
+  },
+  "script": {
+    "source": "ctx._source.Marks++"
+  }
+}
+
+#Search 
+GET student/_search
+{
+  "query":{
+    "match": {
+      "Name": "Junnu"
+    }
+  }
+}
+
+POST student/_update/1
+{
+  "script": {
+    "source": "ctx._source.Age++"
+  },
+  "upsert": {
+    "Name": "Janki",
+    "Age": 20
+  }
+}
+
+#Delete a document
+DELETE student/_doc/maTwWJABBcFjj7CAd0mO
+
+
+#Add multiple documents
+POST student/_bulk
+{"index":{"_id":"2"}}
+{"Name":"Tae","Age":27,"Marks":25,"Address":"Seoul", "hobbies": ["cricket","basketball"]}
+{"index":{"_id":"3"}}
+{"Name":"JK","Age":25,"Marks":27,"Address":"Busan 12","hobbies": ["cricket","football"]}
+{"index":{"_id":"4"}}
+{"Name":"RM","Age":27,"Marks":27,"Address":"Seoul","hobbies": ["basketball","football"]}
+{"index":{"_id":"5"}}
+{"Name":"Jimin","Age":25,"Marks":24,"Address":"Busan","hobbies": ["cricket","football"]}
+
+#Bulk API
+POST student/_bulk
+{"index":{"_id":"6"}}
+{"Name":"Suga","Age":28,"Marks":97,"Address":"Daegu"}
+{"update":{"_id":2}}
+{"doc":{"Age":26}}
+{"delete":{"_id":1}}
+{"update":{"_id":5}}
+{"doc":{"Name":"Jimin"}}
+
+#Aggregation
+GET student/_search
+{
+  "size": 0, 
+  "aggs":{
+    "min_of_age":{
+      "min": {
+        "field": "Age"
+      }
+    },
+    "max_of_age":{
+      "max": {
+        "field": "Age"
+      }
+    },
+     "avg_of_marks":{
+      "avg": {
+        "field": "Marks"
+      }
+    },
+  "sum_of_marks":{
+      "sum": {
+        "field": "Marks"
+      }
+   }
+ }
+}
+
+#count
+GET student/_search
+{
+  "size": 0,
+  "aggs":{
+    "age_count":{
+      "terms": {
+        "field": "Age"
+      }
+    },
+    "address_count":{
+      "terms": {
+        "field": "Address.keyword"
+      }
+    },
+    "marks_count":{
+      "terms": {
+        "field": "Marks"
+      }
+    }
+  }
+}
+DELETE company11
+PUT company11
+{
+  "mappings": {
+    "properties": {
+      "my_join_field":{
+        "type": "join",
+        "relations":{
+          "dept":"emp"
+        }
+      }
+    }
+  }
+}
+
+PUT company/_doc/1
+{
+  "name":"HR",
+  "my_join_field":"dept"
+}
+PUT company/_doc/2
+{
+  "name":"IT",
+  "my_join_field":"dept"
+}
+
+
+PUT company11/_doc/3?routing=1
+{
+  "name":"Ram",
+  "age":30,
+  "my_join_field":{
+    "name":"emp",
+    "parent":1
+  }
+}
+
+PUT company11/_doc/4?routing=2
+{
+  "name":"shyam",
+  "age": 25,
+  "my_join_field":{
+    "name": "emp",
+    "parent": 2
+  }
+}
+
+PUT company11/_doc/5?routing=1
+{
+  "name":"gita",
+  "my_join_field":{
+    "name":"emp",
+    "parent": 1
+  }
+}
+
+GET company11/_search
+{
+  "query":{
+    "match_all": {}
+  }
+}
+
+GET company11/_search
+{
+  "query": {
+    "parent_id":{
+      "id":1,
+      "type":"emp"
+    }
+  }
+}
+
+GET company11/_search
+{
+  "query":{
+    "has_parent": {
+      "parent_type": "dept",
+      "score":true,
+        "query": {
+          "match": {
+            "name": "HR"
+          }
+        }
+      }
+    }
+  }
+  
+DELETE chat11/_doc/2
+
+GET chat11/_search
+{
+  "query":{
+    "match_all": {}
+  }
+}
+
+GET student/_search
+{
+  "query":{
+    "match":{
+      "Address":"Busan"
+    }
+  }
+}
+
+GET student/_search
+{
+  "query": {
+    "match": {
+      "Address": {
+        "query": "Seoul Busan",
+        "operator": "or"
+      }
+    }
+  }
+}
+
+GET student/_search
+{
+  "query": {
+    "dis_max": {
+      "tie_breaker": 0.7,
+      "boost": 1.2,
+      "queries": [
+       { "match": {"Address":"Seoul"}},
+       { "match":{"Marks":24}}
+      ]
+    }
+  }
+}
+GET student/_search
+{
+  "query": {
+    "multi_match": {
+      "query": "25",
+      "fields": ["Age^2","Marks"]
+    }
+  }
+}
+
+
+GET student/_search
+{
+  "query": {
+    "ids": {
+      "values": [2,4]
+    }
+  }
+}
+
+GET student/_search
+{
+  "query": {
+    "term": {
+      "hobbies": {
+        "value": "football"
+      }
+    }
+  }
+}
+
+GET student/_search
+{
+  "query": {
+    "range": {
+      "Age": {
+        "gte": 26,
+        "lt": 28
+      }
+    }
+  }
+}
+
+GET chat11/_search
+{
+  "query": {
+   "match_all": {}
+  }
+}
+GET chat11/_search
+{
+  "query": {
+    "match": {
+      "room": "1"
+    }
+  }
+}
+
+POST user11/_update/1
+{
+  "script": {
+    "source": "ctx._source.occupation = params.new_occupation",
+    "params": {
+      "new_occupation": "Devloper"
+     }
+  }
+}
+
+PUT /chat11/_doc/1
+{
+  "@timestamp": "202-01-01T00:00:00Z",
+  "message": "New year, new beginnings!"
+}
+
+GET /chat11/_search
+{
+  "query": {
+    "match": {
+       "room": "1"
+    }
+  }
+}
+
+GET chat11/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        { "match": { "room": "1" } },
+        {
+          "range": {
+            "@timestamp": {
+              "gte": "2024-06-01T00:00:00Z",
+              "lt": "2024-07-01T00:00:00Z"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+
+DELETE /user11/_doc/2
+DELETE user11
+DELETE student11
+DELETE student
+DELETE chat11
+
+GET chat11/_search
+{
+  "query": {
+    "match": {
+     "room":1
+     }
+  }
+}
+DELETE user11/_doc/gKSeeJABBcFjj7CAK15K
+
+GET user11/_search
+{
+  "query": {
+    "match_all": {}
+  }
+}
+
+GET user11/_search
+{
+  "query":{
+    "match":{
+      "id": 23
+    }
+  }
+}
+GET chat11/_search
+{
+  "query": {
+    "match": {
+      "room": "chat_1_2"
+    }
+  }
+}
+
+POST user11/_update/23
+{
+ "doc": {
+    "fname":"stephen"
+ }
+}
+
+
+GET chat11
